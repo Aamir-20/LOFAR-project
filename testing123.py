@@ -23,3 +23,4 @@ for i in range(len(y)):
  
 print(calculated)
 print(len(calculated))
+print(calculated)

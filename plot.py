@@ -18,4 +18,4 @@ import matplotlib.pyplot as plt
 plt.plot(xf, 2.0/N * np.abs(yf[0:N//2]))
 plt.grid()
 plt.show()
-
+# 
