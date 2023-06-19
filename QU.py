@@ -5,9 +5,9 @@ Created on Fri Jun 16 11:14:41 2023
 @author: Aamir
 """
 
+from scipy.fft import fft, ifft, rfft, irfft, fft2, ifft2, fftshift, fftfreq
 import autograd.numpy as np
 import pylab as pl
-import os,sys
 
 
 def main():
@@ -27,8 +27,9 @@ def main():
 
     
     # make data regularly space in lambda^2:
-    #t1 = np.linspace(lambda2_min, lambda2_max, 512)
-         
+    #1 t1 = np.linspace(lambda2_min, lambda2_max, 512)
+      
+    
     #print("This is lambda squared: ", lambda2)
 
     Q, U = simulate_QU(50, 1.5, 1, lambda2)
@@ -40,20 +41,13 @@ def main():
     print("The minimum of U is: ", min(U))
     print("The maximum of nu is: ", max(nu))
     print("The minimum of nu is: ", min(nu))    
-    plot_sim(Q, U, nu, "Frequency")
+    plot_sim(Q, U, nu, "Frequency")  
+    plot_sim(Q, U, lambda2, "$\lambda^2$")  
     
-    
-    Q, U = simulate_QU(50, 1.5, 1, lambda2)
-    #print("This is Q simulated: ", Q)
-    #print("This is U simulated: ", U)
-    print("The maximum of Q is: ", max(Q))
-    print("The minimum of Q is: ", min(Q))
-    print("The maximum of U is: ", max(U))
-    print("The minimum of U is: ", min(U))
-    print("The maximum of nu is: ", max(nu))
-    print("The minimum of nu is: ", min(nu))    
-    plot_sim(Q, U, lambda2, "$\lambda^2$")    
+    faraday_depth_recovery(Q, U)
 
+    
+    
 
 def simulate_QU(phi_0, chi_0, P_0, l2):
     Q = P_0*np.cos(2*(phi_0*l2+chi_0))
@@ -61,7 +55,43 @@ def simulate_QU(phi_0, chi_0, P_0, l2):
     return Q, U
 
 
-def plot_sim(Q, U, nu, title="$\lambda^2$"):
+# def faraday_depth_recovery(Q, U):
+#     ft = fft(np.array(Q+1j*U)) # produces 512 complex numbers to be mapped with phi  
+#     # pl.plot(np.abs(ft))
+#     # pl.plot(np.real(ft))
+#     # pl.plot(np.imag(ft))
+#     phi = np.linspace(-500,500,512)
+#     pl.plot(phi,np.real(ft),ls='--',c='c',label="Real")
+#     pl.plot(phi,np.imag(ft),ls=':',c='c',label="Imag")
+#     pl.plot(phi,np.abs(ft),ls='-',c='grey',label="Abs")
+#     pl.xlim(-200,200)
+#     pl.ylim(-1,1)
+#     pl.legend(fontsize=14)
+#     pl.xlabel(r"Faraday Depth [rad m$^{-2}$]", fontsize=14)
+#     return ft
+
+
+def faraday_depth_recovery(Q, U):
+    ft = fft(np.array(Q+1j*U)) # produces 512 complex numbers to be mapped with phi  
+    # pl.plot(np.abs(ft))
+    # pl.plot(np.real(ft))
+    # pl.plot(np.imag(ft))
+    phi = np.linspace(-500,500,512)
+    # time_step = 1000/512
+    # phi = fftfreq(ft.size, d=time_step)
+    pl.plot(phi,np.real(ft),ls='--',c='c',label="Real")
+    pl.plot(phi,np.imag(ft),ls=':',c='c',label="Imag")
+    pl.plot(phi,np.abs(ft),ls='-',c='grey',label="Abs")
+    pl.xlim(-200,200)
+    pl.ylim(-1,1)
+    pl.legend(fontsize=14)
+    pl.xlabel(r"Faraday Depth [rad m$^{-2}$]", fontsize=14)
+    return ft
+
+
+
+
+def plot_sim(Q, U, nu, title):
     ax2 = pl.subplot(111)
     
     ax2.plot(nu, Q, linestyle='-', color='c', lw=1.0, label="Q")
