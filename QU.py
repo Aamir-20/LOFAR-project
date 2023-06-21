@@ -23,12 +23,11 @@ def main():
     phi_0 = 50
     chi_0 = 1.5
     P_0 = 1
-    N = 512 
+    N = 512
     
     # make data regularly spaced in frequency:
     nu = np.linspace(nu_min, nu_max, N)
     lambda2 = (const_c/nu)**2
-    #print("lambda2_min, lambda2_max")
     
     # make data regularly spaced in lambda^2: 
     t1 = np.linspace(lambda2_min, lambda2_max, N)    
@@ -97,7 +96,7 @@ def faraday_depth_recovery(phi_0, chi_0, P_0, t1, lambda2, W):
     
     yplot = []
     for _ in range(len(phi)):    
-        f = 1/K*(np.sum(P[_]*W[_]*np.exp(-2*1j*phi[_]*(t1-l0))))
+        f = 1/K*(np.sum(P*W*np.exp(-2*1j*phi[_]*(t1-l0))))
         yplot.append(f)
 
 
@@ -110,7 +109,7 @@ def faraday_depth_recovery(phi_0, chi_0, P_0, t1, lambda2, W):
     pl.plot(phi, np.real(yplot), ls='--', c='c', label="Real")
     pl.plot(phi, np.imag(yplot), ls=':', c='c', label="Imag")
     pl.xlim(-200, 200)
-    # pl.ylim(-0.4, 0.6)
+    pl.xlabel(r"Faraday Depth [rad m$^{-2}$]")
     pl.legend()
     pl.grid()
     pl.show()  
