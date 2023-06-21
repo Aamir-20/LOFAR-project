@@ -5,7 +5,7 @@ Created on Fri Jun 16 11:14:41 2023
 @author: Aamir
 """
 
-from scipy.fft import fft, ifft, rfft, irfft, fft2, ifft2, fftshift, fftfreq
+from scipy.fft import fft, ifft, fftshift, fftfreq
 import autograd.numpy as np
 import pylab as pl
 
@@ -19,126 +19,37 @@ def main():
     lambda2_min = (const_c/nu_max)**2
     lambda2_max = (const_c/nu_min)**2
     
-    print(lambda2_min, lambda2_max)
+    # Adjust parameters here:
+    phi_0 = 50
+    chi_0 = 1.5
+    P_0 = 1
+    N = 512 
     
     # make data regularly spaced in frequency:
-    nu = np.linspace(0.58e9, 2.50e9, 512)
+    nu = np.linspace(nu_min, nu_max, N)
     lambda2 = (const_c/nu)**2
-    ###lambda2 = lambda2[::-1]
-
+    #print("lambda2_min, lambda2_max")
     
-    # make data regularly space in lambda^2:
-    #1 t1 = np.linspace(lambda2_min, lambda2_max, 512)
-      
+    # make data regularly spaced in lambda^2: 
+    t1 = np.linspace(lambda2_min, lambda2_max, N)    
     
-    #print("This is lambda squared: ", lambda2)
-
-    Q, U = simulate_QU(50, 1.5, 1, lambda2)
-    #print("This is Q simulated: ", Q)
-    #print("This is U simulated: ", U)
-    print("The maximum of Q is: ", max(Q))
-    print("The minimum of Q is: ", min(Q))
-    print("The maximum of U is: ", max(U))
-    print("The minimum of U is: ", min(U))
-    print("The maximum of nu is: ", max(nu))
-    print("The minimum of nu is: ", min(nu))    
-    plot_sim(Q, U, nu, "Frequency")  
-    plot_sim(Q, U, lambda2, "$\lambda^2$")  
+    Q, U = simulate_QU(phi_0, chi_0, P_0, lambda2)  
+    #plot_sim(Q, U, nu, "Frequency")  
+    #plot_sim(Q, U, lambda2, "$\lambda^2$")  
     
-    
-    faraday_depth_recovery(Q, U)
-
-    
+    faraday_depth_recovery(phi_0, chi_0, P_0, t1, lambda2, np.ones(len(lambda2)))
     
 
-def simulate_QU(phi_0, chi_0, P_0, l2):
-    Q = P_0*np.cos(2*(phi_0*l2+chi_0))
-    U = P_0*np.sin(2*(phi_0*l2+chi_0))
+def simulate_QU(phi_0, chi_0, P_0, lambda2):
+    
+    Q = P_0*np.cos(2*(phi_0*lambda2+chi_0))
+    U = P_0*np.sin(2*(phi_0*lambda2+chi_0))
+    
     return Q, U
 
 
-def faraday_depth_recovery(Q, U):
-    N = 512
-    phi = np.linspace(-500, 500, N)
-    T = 1 / 512.0
-    y = Q+1j*U
-    yf = fft(y)
-    #xf = fftfreq(N, T)
-    #xf = fftshift(xf)
-    #yplot = fftshift(yf)
-    pl.plot(phi, np.abs(yf),ls='-',c='grey',label="Abs")
-    pl.plot(phi, np.real(yf),ls='--',c='c',label="Real")
-    pl.plot(phi, np.imag(yf),ls=':',c='c',label="Imag")
-    #pl.xlim(-200,200)
-    #pl.ylim(-0.4,0.6)
-    pl.grid()
-    pl.show()
-
-
-
-
-
-# def faraday_depth_recovery(Q, U):
-#     from scipy.signal import blackman
-#     w = blackman(512)
-#     ft = fft(((Q+1j*U))*w, norm="ortho") # produces 512 complex numbers to be mapped with phi  
-#     # pl.plot(np.abs(ft))
-#     # pl.plot(np.real(ft))
-#     # pl.plot(np.imag(ft))
-#     print("This is the transformed points: " ,ft)
-#     print("This is the real part: ", np.real(ft))
-#     print("Real Maximum: ", max(np.real(ft)))
-#     print("Real Minimum: ", min(np.real(ft)))
-#     print("This is the imaginary part: ", np.imag(ft))
-#     print("Imag Maximum: ", max(np.imag(ft)))
-#     print("Imag Minimum: ", min(np.imag(ft)))
-#     print("This is the absolute part: ", np.abs(ft))
-#     print("Abs Maximum: ", max(np.abs(ft)))
-#     print("Abs Minimum: ", min(np.abs(ft)))
-#     phi = np.linspace(-500,500,512)
-#     pl.plot(phi,np.real(ft),ls='--',c='c',label="Real")
-#     pl.plot(phi,np.imag(ft),ls=':',c='c',label="Imag")
-#     pl.plot(phi,np.abs(ft),ls='-',c='grey',label="Abs")
-#     pl.xlim(-200,200)
-#     pl.ylim(-10,10)
-#     pl.legend(fontsize=14)
-#     pl.xlabel(r"Faraday Depth [rad m$^{-2}$]", fontsize=14)
-#     return None
-
-
-# def faraday_depth_recovery(Q, U):
-#     print(Q+1j*U)
-#     ft = fft(np.array(Q+1j*U), norm = "ortho") # produces 512 complex numbers to be mapped with phi  
-#     #print(ft)
-    
-#     # Number of sample points
-#     N = 512
-#     # sample spacing
-#     T = 1000 / 512
-#     xf = fftfreq(N, T)[:N//2]
-#     pl.plot(xf, 2.0/N * np.abs(ft[0:N//2])) 
-#     pl.grid()
-#     pl.show()
-    
-#     # pl.plot(np.abs(ft))
-#     # pl.plot(np.real(ft))
-#     # pl.plot(np.imag(ft))
-#     phi = np.linspace(-200,200,512)
-#     # time_step = 1000/512
-#     # phi = fftfreq(ft.size, d=time_step)
-#     pl.plot(phi,np.real(ft),ls='--',c='c',label="Real")
-#     pl.plot(phi,np.imag(ft),ls=':',c='c',label="Imag")
-#     pl.plot(phi,np.abs(ft),ls='-',c='grey',label="Abs")
-#     pl.xlim(0,80)
-#     pl.ylim(-100,100)
-#     pl.legend(fontsize=14)
-#     pl.xlabel(r"Faraday Depth [rad m$^{-2}$]", fontsize=14)
-#     return Q+1j*U
-
-
-
-
 def plot_sim(Q, U, nu, title):
+    
     ax2 = pl.subplot(111)
     
     ax2.plot(nu, Q, linestyle='-', color='c', lw=1.0, label="Q")
@@ -149,6 +60,62 @@ def plot_sim(Q, U, nu, title):
     ax2.legend()
     pl.show()
     
+    
+def calc_k(W):
+    
+    K = np.sum(W)
+    
+    return K
+
+
+def calc_l0(W,lambda2):
+    
+    K = calc_k(W)
+    l0 = (1./K)*np.sum(W*lambda2)
+    
+    return l0
+
+    
+
+def faraday_depth_recovery(phi_0, chi_0, P_0, t1, lambda2, W):
+    """Aim is to recover Faraday depth spectrum.
+    """
+    Q, U = simulate_QU(phi_0, chi_0, P_0, t1)
+    
+    N = 512
+    phi_min = -200
+    phi_max = 200
+    phi = np.linspace(phi_min, phi_max, N)
+    # T = (phi_max - phi_min) / N
+
+    P = Q + 1j * U # Produces N complex numbers to be mapped with phi  
+    K = calc_k(W)
+    l0 = calc_l0(W, t1)
+    print(K)
+    print(l0)
+    #print(W)
+    
+    yplot = []
+    for _ in range(len(phi)):    
+        f = 1/K*(np.sum(P[_]*W[_]*np.exp(-2*1j*phi[_]*(t1-l0))))
+        yplot.append(f)
+
+
+    yplot = np.array(yplot)
+    print(yplot) 
+    
+    
+
+    pl.plot(phi, np.abs(yplot), ls='-', c='grey', label="Abs")
+    pl.plot(phi, np.real(yplot), ls='--', c='c', label="Real")
+    pl.plot(phi, np.imag(yplot), ls=':', c='c', label="Imag")
+    pl.xlim(-200, 200)
+    # pl.ylim(-0.4, 0.6)
+    pl.legend()
+    pl.grid()
+    pl.show()  
+    
+
     
 if __name__ == "__main__":
     main()
