@@ -8,7 +8,7 @@ Created on Fri Jun 16 11:14:41 2023
 from scipy.fft import fft, ifft, fftshift, fftfreq
 import autograd.numpy as np
 import pylab as pl
-#
+
 
 def main():
     const_c = 3e8

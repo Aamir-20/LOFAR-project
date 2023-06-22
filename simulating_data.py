@@ -41,7 +41,7 @@ def simulate_QU(phi_0, chi_0, P_0, lambda2):
     return Q, U
 
 def main():
-    # Defining constants.
+    # Defining constants..
     const_c = 3e8
     N = 512 
     n = 10000 # Number of random samples generated.
