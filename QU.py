@@ -1,9 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Fri Jun 16 11:14:41 2023
-
-@author: Aamir
-"""
 
 from scipy.fft import fft, ifft, fftshift, fftfreq
 import autograd.numpy as np

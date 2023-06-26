@@ -1,9 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Jun 21 16:13:07 2023
-
-@author: Aamir 
-"""
 
 import random, csv, time, numpy as np, pandas as pd
 
@@ -41,7 +36,7 @@ def simulate_QU(phi_0, chi_0, P_0, lambda2):
     return Q, U
 
 def main():
-    # Defining constants..
+    # Defining constants.
     const_c = 3e8
     N = 512 
     n = 10000 # Number of random samples generated.
