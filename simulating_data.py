@@ -33,7 +33,7 @@ def simulate_QU(phi_0, chi_0, P_0, lambda2):
     Q = P_0*np.cos(2*(phi_0*lambda2+chi_0))
     U = P_0*np.sin(2*(phi_0*lambda2+chi_0))
     
-    return Q, U
+    return Q.tolist(), U.tolist()
 
 def main():
     # Defining constants.
@@ -52,10 +52,10 @@ def main():
 
     with open('test_train_data.csv', 'w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["id","phi_0", "chi_0", "P_0", "Q", "U"])
+        writer.writerow(["phi_0", "chi_0", "P_0", "Q", "U"])
         for i in range(n):
             Q, U = simulate_QU(gen_phi_0[i], gen_chi_0[i], gen_P_0[i],lambda2)
-            writer.writerow([i+1, gen_phi_0[i], gen_chi_0[i], gen_P_0[i], Q, U])
+            writer.writerow([gen_phi_0[i], gen_chi_0[i], gen_P_0[i], Q, U])
     
     
     results = pd.read_csv('test_train_data.csv')

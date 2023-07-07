@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-
-from scipy.fft import fft, ifft, fftshift, fftfreq
 import autograd.numpy as np
 import pylab as pl
 
@@ -97,7 +95,6 @@ def faraday_depth_recovery(phi_0, chi_0, P_0, t1, lambda2, W):
 
     yplot = np.array(yplot)
     print(yplot) 
-    
     
 
     pl.plot(phi, np.abs(yplot), ls='-', c='grey', label="Abs")
