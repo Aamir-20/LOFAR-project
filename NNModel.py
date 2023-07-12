@@ -12,6 +12,7 @@ import torch  # Deep learning library
 from torch.nn import Module, Linear, Sigmoid, MSELoss, ReLU, Tanh  # Neural network components
 from torch.optim import SGD  # Stochastic gradient descent optimizer
 from torch.utils.data import Dataset, DataLoader, random_split  # Data loading and handling
+from QU import plot_sim, faraday_depth_recovery
 
 
 t1 = time()
@@ -41,7 +42,7 @@ class CSVDataset(Dataset):
     
     """
     
-    def __init__(self, path):
+    def __init__(self, path):   
         """
         Initialize the CSVDataset.
         
@@ -232,7 +233,7 @@ def prepare_data(path, batch_size):
 
 
 # Train the model.
-def train_model(train_dl, model, num_epochs, device, learning_rate):
+def train_model(train_dl, test_dl, model, num_epochs, device, learning_rate, momentum):
     """
     Trains the model using the training data set.
 
@@ -240,6 +241,8 @@ def train_model(train_dl, model, num_epochs, device, learning_rate):
     ----------
     train_dl : (torch.utils.data.dataloader.DataLoader)
         DataLoader object that provides the training data.
+    test_dl : (torch.utils.data.dataloader.DataLoader)
+        DataLoader object that provides the testing data.  
     model : MLP
         The MLP model to be trained.
     num_epochs : int
@@ -248,15 +251,21 @@ def train_model(train_dl, model, num_epochs, device, learning_rate):
         String indicating whether code is to be run on cpu or gpu.
     learning_rate : int
         Integer representing the learning rate to beused for training.
+    momentum : float
+        Float representing the learning momentum.
 
     Returns
     -------
     None.
 
     """
+    # open path to file in writer mode
+    file = open("plot.csv", "w", newline="")
+    writer = csv.writer(file)
+    writer.writerow(["training loss", "epoch", "validation loss"])
     # define the optimization
     criterion = MSELoss()
-    optimizer = SGD(model.parameters(), lr=learning_rate, momentum=0.9)
+    optimizer = SGD(model.parameters(), lr=learning_rate, momentum=momentum)
     # enumerate epochs
     for epoch in range(num_epochs):
         # enumerate mini batches
@@ -280,10 +289,14 @@ def train_model(train_dl, model, num_epochs, device, learning_rate):
             
             # update model weights (gradient descent)
             optimizer.step()
-
+        
+        writer.writerow([epoch+1, loss.item(), evaluate_model(test_dl, model, device)])
+    
+    file.close()
+    
 
 # Evaluate the model.
-def evaluate_model(test_dl, model):
+def evaluate_model(test_dl, model, device):
     """
     Evaluates the model by calculating the mean squared error
     and returning it.
@@ -294,6 +307,8 @@ def evaluate_model(test_dl, model):
         DataLoader object that provides the testing data.
     model : MLP
         The trained model that is to be evaluated.
+    device : str
+        String indicating whether code is to be run on cpu or gpu.
 
     Returns
     -------
@@ -322,6 +337,13 @@ def evaluate_model(test_dl, model):
         return mse.item()
 
 
+# Predict a result using unseen data.
+def prediction(model, phi_0,chi_0,P_0):
+    yhat = model(torch.tensor([phi_0,chi_0,P_0]))
+    return yhat.tolist()
+
+
+# Save a copy of current file.
 def save_copy():
     """
     Creates a copy of the current file. 
@@ -353,7 +375,8 @@ def save_copy():
     return filename
 
 
-def save_run_info(mse, n_inputs, learning_rate, batch_size, num_epochs, filename=os.path.basename(__file__)):
+# Add run info to an existing csv file.
+def save_run_info(mse, momentum, learning_rate, batch_size, num_epochs, filename=os.path.basename(__file__)):
     """
     Saves the hyperparameters to a csv file called runs.
 
@@ -361,8 +384,8 @@ def save_run_info(mse, n_inputs, learning_rate, batch_size, num_epochs, filename
     ----------
     mse : float
         Float representing the mean squared error of the model.
-    n_inputs : int
-        Integer representing the number of input features.
+    momentum : float
+        Float representing the momentum used in training the model.
     learning_rate : int
         Integer representing the learning rate to beused for training.
     batch_size : int
@@ -377,54 +400,70 @@ def save_run_info(mse, n_inputs, learning_rate, batch_size, num_epochs, filename
     None.
 
     """
-    row = [mse, n_inputs, learning_rate, batch_size, num_epochs, filename]
+    row = [mse, momentum, learning_rate, batch_size, num_epochs, filename]
     path = os.path.dirname(__file__) + "/configs/runs.csv" 
     with open(path, "a", newline="") as f:
         csv.writer(f).writerow(row) 
         
 
+def main():
 
-
-
-# Set device.
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-# Hyperparameters.
-n_inputs = 3
-learning_rate = 0.001
-batch_size = 32 # ideal number from the originator
-num_epochs = 8
-
-# Get train and test data.
-path = "test_train_data.csv"
-train_dl, test_dl = prepare_data(path, batch_size)
-t2 = time()
-print(f"Loading data: {t2-t1} secs")    
-
-# Define the network.
-model = MLP(n_inputs).to(device)
-
-# Train the model.
-train_model(train_dl, model, num_epochs, device, learning_rate)
-t3 = time()
-print(f"Training the model: {t3-t2} secs")        
-
-# Evaluate the model.
-mse = evaluate_model(test_dl, model)
-t4 = time()
-print(f"Evaluating the model: {t4-t3} secs")    
-print(f"Overall time: {time()-t1} secs")
-print(f"Mean Squared Error: {mse:.4f}")
-
-# Saving code copy and updating leaderboard.
-while True:
-    ask = input("Save copy (y/n)? ")
-    if ask.lower() == "y" or ask.lower() == "yes":
-        filename = save_copy()
-        save_run_info(mse, n_inputs, learning_rate, batch_size, num_epochs,filename)
-        break
-    elif ask.lower() == "n" or ask.lower() == "no":
-        save_run_info(mse, n_inputs, learning_rate, batch_size, num_epochs)
-        break
+    # Set device.
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-print("Leaderboard updated.")
+    # Hyperparameters.
+    n_inputs = 3
+    learning_rate = 0.001
+    batch_size = 32 # ideal number from the originator
+    num_epochs = 10
+    momentum = 0.9
+    
+    # Get train and test data.
+    path = "test_train_data.csv"
+    train_dl, test_dl = prepare_data(path, batch_size)
+    t2 = time()
+    print(f"Loading data: {t2-t1} secs")    
+    
+    # Define the network.
+    model = MLP(n_inputs).to(device)
+    
+    # Train the model.
+    print("Training the model: ",end="")
+    train_model(train_dl, test_dl, model, num_epochs, device, learning_rate, momentum)
+    t3 = time()
+    print(f"{t3-t2} secs")          
+    
+    # Save the entire model.
+    torch.save(model, "model.pth")
+    
+    # Evaluate the model.
+    mse = evaluate_model(test_dl, model, device)
+    t4 = time()
+    print(f"Evaluating the model: {t4-t3} secs")    
+    print(f"Overall time: {time()-t1} secs")
+    print(f"Mean Squared Error: {mse:.4f}")
+    
+    # Make a single prediction and plot the graphs.
+    phi_0, chi_0, P_0 = 50, 1.5, 1
+    yhat = prediction(model, phi_0, chi_0, P_0)
+    Q, U = np.array(yhat[:512]), np.array(yhat[512:])
+    lambda2 = (3e8/np.linspace(0.58e9, 2.50e9, 512))**2
+    plot_sim(Q, U, lambda2, "$\lambda^2$") 
+    faraday_depth_recovery(Q, U, phi_0, chi_0, P_0)
+    
+    
+    # Saving code copy and updating leaderboard.
+    while True:
+        ask = input("Save copy (yes/no)? ")
+        if ask.lower() == "y" or ask.lower() == "yes":
+            filename = save_copy()
+            save_run_info(mse, momentum, learning_rate, batch_size, num_epochs,filename)
+            break
+        elif ask.lower() == "n" or ask.lower() == "no":
+            save_run_info(mse, momentum, learning_rate, batch_size, num_epochs)
+            break
+        
+    print("Leaderboard updated.")
+
+if __name__ == "__main__":
+    main()

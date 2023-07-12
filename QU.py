@@ -6,8 +6,7 @@ import pylab as pl
 def main():
     const_c = 3e8
     
-    nu_min = 0.58e9
-    nu_max = 2.50e9
+    nu_min, nu_max = 0.58e9, 2.50e9
     
     lambda2_min = (const_c/nu_max)**2
     lambda2_max = (const_c/nu_min)**2
@@ -23,13 +22,13 @@ def main():
     lambda2 = (const_c/nu)**2
     
     # make data regularly spaced in lambda^2: 
-    t1 = np.linspace(lambda2_min, lambda2_max, N)    
+    lambda_spaced = np.linspace(lambda2_min, lambda2_max, N)    
     
-    Q, U = simulate_QU(phi_0, chi_0, P_0, lambda2)  
+    Q, U = simulate_QU(phi_0, chi_0, P_0, lambda_spaced)  
     #plot_sim(Q, U, nu, "Frequency")  
-    #plot_sim(Q, U, lambda2, "$\lambda^2$")  
+    plot_sim(Q, U, lambda2, "$\lambda^2$")  
     
-    faraday_depth_recovery(phi_0, chi_0, P_0, t1, lambda2, np.ones(len(lambda2)))
+    faraday_depth_recovery(Q, U, phi_0, chi_0, P_0, np.ones(len(lambda2)))
     
 
 def simulate_QU(phi_0, chi_0, P_0, lambda2):
@@ -69,33 +68,36 @@ def calc_l0(W,lambda2):
 
     
 
-def faraday_depth_recovery(phi_0, chi_0, P_0, t1, lambda2, W):
+def faraday_depth_recovery(Q, U, phi_0, chi_0, P_0, W=512):
     """Aim is to recover Faraday depth spectrum.
     """
-    Q, U = simulate_QU(phi_0, chi_0, P_0, t1)
-    
+    const_c = 3e8
     N = 512
-    phi_min = -200
-    phi_max = 200
+    
+    nu_min, nu_max = 0.58e9, 2.50e9
+    
+    lambda2_min = (const_c/nu_max)**2
+    lambda2_max = (const_c/nu_min)**2
+    
+    # make data regularly spaced in lambda^2: 
+    lambda_spaced = np.linspace(lambda2_min, lambda2_max, N)  
+
+  
+    phi_min, phi_max = -200, 200
     phi = np.linspace(phi_min, phi_max, N)
-    # T = (phi_max - phi_min) / N
 
     P = Q + 1j * U # Produces N complex numbers to be mapped with phi  
     K = calc_k(W)
-    l0 = calc_l0(W, t1)
-    print(K)
-    print(l0)
-    #print(W)
-    
+    l0 = calc_l0(W, lambda_spaced)
+
     yplot = []
     for _ in range(len(phi)):    
-        f = 1/K*(np.sum(P*W*np.exp(-2*1j*phi[_]*(t1-l0))))
+        f = 1/K*(np.sum(P*W*np.exp(-2*1j*phi[_]*(lambda_spaced-l0))))
         yplot.append(f)
 
 
     yplot = np.array(yplot)
-    print(yplot) 
-    
+
 
     pl.plot(phi, np.abs(yplot), ls='-', c='grey', label="Abs")
     pl.plot(phi, np.real(yplot), ls='--', c='c', label="Real")
