@@ -6,16 +6,12 @@ import random, csv, time, numpy as np, pandas as pd
 # simulate 10,000 data points
 # store the training data
 # 80% used for training, 20% for testing
-# learn more about surrogate models in practice, start from the first three articles
-# implement the fully connected neural network
 
 # phi_0 ranges from -200 to 200
 # chi_0 ranges from 0 to pi
 # P_0 ranges from 0.1 to 1
 # benchmark the runtime
 
-# random, time, csv
-# must truly understand what a surrogate model is
 
 t1 = time.time()
 
